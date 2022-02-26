@@ -20,11 +20,35 @@ namespace GreatTables.Controllers
         }
 
         // GET: Tables
-        public async Task<IActionResult> Index()
+        // GET: Movies
+        public async Task<IActionResult> Index(string tableQuality, string searchString)
         {
-            return View(await _context.Table.ToListAsync());
-        }
+            // Use LINQ to get list of genres.
+            IQueryable<string> qualityQuery = from m in _context.Table
+                                            orderby m.Quality
+                                            select m.Quality;
 
+            var tables = from m in _context.Table
+                         select m;
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                tables = tables.Where(s => s.Quality.Contains(searchString));
+            }
+
+            if (!string.IsNullOrEmpty(tableQuality))
+            {
+                tables = tables.Where(x => x.Quality == tableQuality);
+            }
+
+            var tableQualityVM = new TableQualityViewModel
+            {
+                Quality = new SelectList(await qualityQuery.Distinct().ToListAsync()),
+                Tables = await tables.ToListAsync()
+            };
+
+            return View(tableQualityVM);
+        }
         // GET: Tables/Details/5
         public async Task<IActionResult> Details(int? id)
         {
